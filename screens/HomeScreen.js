@@ -4,14 +4,17 @@ import bg from "../assets/images/bg.png"
 import { theme } from "../theme";
 
 import {MagnifyingGlassIcon} from "react-native-heroicons/outline"
+import {MapPinIcon} from "react-native-heroicons/solid"
 import { useState } from "react";
 
 
 export default function HomeScreen() {
 
     const [showSearch, toggleSearch] = useState(false)
-
-    // console.log(showSearch)
+    const [locations, setLocations] = useState([1,2,3,4])
+    const handleLocation = (loc)=>{
+        console.log('location: ', loc)
+    }
     return(
         <View className="flex-1 relative">
             <StatusBar style="light"/>
@@ -39,7 +42,29 @@ export default function HomeScreen() {
                             color="white"/>
                         </TouchableOpacity>
                     </View>
+                    {/* Aca es donde van las listas de locaciones*/
+                        locations.length > 0 && showSearch? (
+                            <View className="absolute w-full bg-gray-300 top-16 rounded-3xl mt-11">
+                                {
+                                    locations.map((loc, index)=>{
+                                        const showBorder = index + 1 != locations.length
+                                        const borderClass = showBorder? " border-b-2 border-b-gray-400" : ""
+                                        return(
+                                            <TouchableOpacity
+                                            onPress={()=> handleLocation(loc)}
+                                            key={index}
+                                            className={"flex-row items-center border-0 p-4 px-4 mt-1" + borderClass}>
+                                                <MapPinIcon size="20" color="gray"/>
+                                                <Text className="text-black text-lg ml-2">Córdoba, Argentina</Text>
+                                            </TouchableOpacity>
+                                        )
+                                    })
+                                }
+                            </View>
+                        ):null
+                    }
                 </View>
+                {/* En esta seccion va el pronostico, obvimente separar proximamente en componentes*/}
             </SafeAreaView>
         </View>
     )
