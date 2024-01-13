@@ -20,7 +20,108 @@ export default function HomeScreen() {
     const [showSearch, toggleSearch] = useState(false)
     const [locations, setLocations] = useState([])
     const [weather, setWeather] = useState([])
-    const [myCity, setMyCity] = useState()
+    // const [myLocation, setMyLocation] = useState(null);
+    // const [errorMsg, setErrorMsg] = useState(null);
+    // const [myAddress, setMyAddress] = useState(null);
+//   useEffect(() => {
+//     (async () => {
+//       // Solicitar permisos de ubicación
+//       let { status } = await Location.requestForegroundPermissionsAsync();
+//       if (status !== 'granted') {
+//         console.log('Permiso denegado para acceder a la ubicación');
+//         return;
+//       }
+//       console.log(location)
+//       // Obtener la ubicación actual
+//       let location = await Location.getCurrentPositionAsync({});
+//       setMyLocation(location);
+//       console.log(location)
+
+//       // Obtener la ubicación inversa
+//       let reverseLocation = await Location.reverseGeocodeAsync({
+//         latitude: location.coords.latitude,
+//         longitude: location.coords.longitude,
+//       });
+//       console.log(reverseLocation[0].city)
+
+
+//       fetchWeatherForecast({
+//         cityName: reverseLocation[0].city,
+//         days: "7"
+//     }).then(data=>{
+//         setWeather(data)
+//     })
+
+      
+//     })();
+//   }, []);
+
+const [myLocation, setMyLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [myAddress, setMyAddress] = useState(null);
+
+  useEffect(() => {
+    const getLocation = async () => {
+        try {
+          // Solicitar permisos de ubicación
+          let { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            setErrorMsg('Permiso denegado para acceder a la ubicación');
+            return;
+          }
+  
+          // Intentar obtener la ubicación actual
+          try {
+            let location = await Location.getCurrentPositionAsync({});
+            setMyLocation(location);
+  
+            // Obtener la ubicación inversa
+            let reverseLocation = await Location.reverseGeocodeAsync({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            });
+  
+            // Actualizar la dirección en el estado
+            setMyAddress(reverseLocation[0] || null);
+            console.log(reverseLocation)
+            fetchWeatherForecast({
+                        cityName: reverseLocation[0].city,
+                        days: "7"
+                    }).then(data=>{
+                        setWeather(data)
+                    })
+          } catch (error) {
+            // Manejar el caso en que se cancela manualmente la solicitud
+            if (error.message.includes('Location request failed due to unsatisfied device settings')) {
+              console.log('Solicitud de ubicación cancelada manualmente');
+              // Establecer manualmente la ubicación en Barcelona
+              fetchWeatherForecast({
+                cityName: "Barcelona",
+                days: "7"
+            }).then(data=>{
+                setWeather(data)
+            })
+            //   setMyLocation({ coords: { latitude: 41.3851, longitude: 2.1734 } });
+            } else {
+              throw error; // Re-lanzar el error si no es una cancelación manual
+            }
+          }
+        } catch (error) {
+          console.error('Error general:', error.message);
+          setErrorMsg('Error al obtener la ubicación');
+        }
+        
+      };
+  
+      getLocation();
+  
+      return () => {
+        // Puedes realizar limpieza o cancelar la solicitud de ubicación aquí si es necesario
+      };
+    }, []);
+
+
+
 
     const handleLocation = (loc)=>{
         setLocations({})
@@ -40,39 +141,6 @@ export default function HomeScreen() {
             })
         }
     }
-    
-    useEffect(()=>{
-        fetchMyWeatherData()
-    }, [])
-    useEffect(()=>{ 
-        const getPermissions = async () =>{
-            let {status} = await Location.requestForegroundPermissionsAsync()
-            if (status !== "granted"){
-                console.log("plase grant location permissions")
-                return
-            }
-
-            let currentLocation = await Location.getCurrentPositionAsync({})
-
-            const reverseGeocodedAddress = await Location.reverseGeocodeAsync({
-                longitude: currentLocation.coords.longitude,
-                latitude: currentLocation.coords.latitude
-            });
-            setMyCity(reverseGeocodedAddress)
-        }
-        getPermissions()
-    }, [])
-
-
-    const fetchMyWeatherData = async ()=>{
-        fetchWeatherForecast({
-            cityName: myCity[0].city,
-            days: "7"
-        }).then(data=>{
-            setWeather(data)
-        })
-    }
-
     const handleTextDebounce = useCallback(debounce(handleSearch, 1000), [])
     const {current, location} = weather
 
